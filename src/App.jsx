@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase';
+import { isAdminEmail } from './config/admin';
 import Home from './pages/Home';
 import Topic from './pages/Topic';
 import Admin from './pages/Admin';
@@ -9,6 +10,7 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Contact from './pages/Contact';
 import About from './pages/About';
+import Unauthorized from './pages/Unauthorized';
 
 function ProtectedRoute({ children }) {
     const [user, setUser] = useState(null);
@@ -32,12 +34,21 @@ function ProtectedRoute({ children }) {
             </div>
         );
     }
+
+    // Check if user is authenticated
     if (!user) return <Navigate to="/login" />;
+
+    // Check if user has admin privileges
+    if (!isAdminEmail(user.email)) {
+        return <Navigate to="/unauthorized" />;
+    }
+
     return children;
 }
 
 function NavBar() {
     const [user, setUser] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
@@ -45,6 +56,7 @@ function NavBar() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
+            setIsAdmin(currentUser ? isAdminEmail(currentUser.email) : false);
         });
         return () => unsubscribe();
     }, []);
@@ -104,9 +116,11 @@ function NavBar() {
                         </Link>
                         {user && (
                             <>
-                                <Link to="/admin" className={`${isActive('/admin')} transition-colors`}>
-                                    Dashboard
-                                </Link>
+                                {isAdmin && (
+                                    <Link to="/admin" className={`${isActive('/admin')} transition-colors`}>
+                                        Dashboard
+                                    </Link>
+                                )}
                                 <button
                                     onClick={handleLogout}
                                     className="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors font-medium"
@@ -174,12 +188,14 @@ function NavBar() {
                         </Link>
                         {user && (
                             <>
-                                <Link
-                                    to="/admin"
-                                    className={`block px-4 py-2 rounded-lg ${isActive('/admin')} transition-colors`}
-                                >
-                                    Dashboard
-                                </Link>
+                                {isAdmin && (
+                                    <Link
+                                        to="/admin"
+                                        className={`block px-4 py-2 rounded-lg ${isActive('/admin')} transition-colors`}
+                                    >
+                                        Dashboard
+                                    </Link>
+                                )}
                                 <button
                                     onClick={handleLogout}
                                     className="w-full text-left px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors font-medium"
@@ -216,6 +232,7 @@ function App() {
                         <Route path="/topic/:topicId" element={<Topic />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<SignUp />} />
+                        <Route path="/unauthorized" element={<Unauthorized />} />
                         <Route
                             path="/admin"
                             element={

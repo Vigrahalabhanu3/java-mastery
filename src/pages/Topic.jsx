@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '../firebase';
 
 function Topic() {
     const { topicId } = useParams();
@@ -9,9 +10,25 @@ function Topic() {
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedQuestions, setExpandedQuestions] = useState(new Set());
+    const [user, setUser] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            setAuthLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         const fetchTopicData = async () => {
+            // Only fetch if user is authenticated
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 const topicDocRef = doc(db, 'java_topics', topicId);
                 const topicDoc = await getDoc(topicDocRef);
@@ -34,8 +51,10 @@ function Topic() {
             }
         };
 
-        fetchTopicData();
-    }, [topicId]);
+        if (!authLoading) {
+            fetchTopicData();
+        }
+    }, [topicId, user, authLoading]);
 
     const toggleQuestion = (questionId) => {
         setExpandedQuestions(prev => {
@@ -49,7 +68,12 @@ function Topic() {
         });
     };
 
-    if (loading) {
+    // Redirect to login if not authenticated
+    if (!authLoading && !user) {
+        return <Navigate to="/login" />;
+    }
+
+    if (loading || authLoading) {
         return (
             <div className="container-custom section">
                 <div className="skeleton-shimmer h-8 w-32 mb-8"></div>

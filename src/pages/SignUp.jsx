@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
+import { isAdminEmail } from '../config/admin';
 import { useNavigate, Link } from 'react-router-dom';
 
 function SignUp() {
@@ -46,8 +47,15 @@ function SignUp() {
 
         setLoading(true);
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            navigate('/admin');
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Redirect based on user role
+            if (isAdminEmail(user.email)) {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             setError(err.message);
             console.error(err);
@@ -194,9 +202,9 @@ function SignUp() {
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-xs text-slate-600">Password strength:</span>
                                         <span className={`text-xs font-semibold ${passwordStrength.label === 'Weak' ? 'text-red-600' :
-                                                passwordStrength.label === 'Fair' ? 'text-orange-600' :
-                                                    passwordStrength.label === 'Good' ? 'text-yellow-600' :
-                                                        'text-green-600'
+                                            passwordStrength.label === 'Fair' ? 'text-orange-600' :
+                                                passwordStrength.label === 'Good' ? 'text-yellow-600' :
+                                                    'text-green-600'
                                             }`}>
                                             {passwordStrength.label}
                                         </span>

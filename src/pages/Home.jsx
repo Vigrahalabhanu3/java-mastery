@@ -1,15 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '../firebase';
 
 function Home() {
     const [topics, setTopics] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [user, setUser] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            setAuthLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         const fetchTopics = async () => {
+            // Only fetch topics if user is logged in
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 const querySnapshot = await getDocs(collection(db, 'java_topics'));
                 const topicsList = querySnapshot.docs.map(doc => ({
@@ -24,8 +41,10 @@ function Home() {
             }
         };
 
-        fetchTopics();
-    }, []);
+        if (!authLoading) {
+            fetchTopics();
+        }
+    }, [user, authLoading]);
 
     const filteredTopics = topics.filter(topic =>
         topic.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -116,123 +135,199 @@ function Home() {
 
             {/* Search and Topics Section */}
             <section id="topics" className="container-custom section">
-                {/* Search Bar */}
-                <div className="max-w-2xl mx-auto mb-12">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Search topics..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="input-field pl-12 pr-4 py-4 text-lg shadow-md"
-                        />
-                        <svg
-                            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-400"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                </div>
+                {/* Show login prompt if user is not authenticated */}
+                {!user && !authLoading ? (
+                    <div className="max-w-3xl mx-auto text-center">
+                        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-12">
+                            {/* Lock Icon */}
+                            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-full flex items-center justify-center">
+                                <svg className="w-10 h-10 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
 
-                {/* Section Header */}
-                <div className="text-center mb-12">
-                    <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
-                        Explore Java Topics
-                    </h2>
-                    <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Choose from our curated collection of Java programming topics
-                    </p>
-                </div>
+                            {/* Heading */}
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                                Sign In to Access Topics
+                            </h2>
 
-                {/* Topics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredTopics.map((topic, index) => (
-                        <Link
-                            key={topic.id}
-                            to={`/topic/${topic.id}`}
-                            className="group block h-full animate-fadeIn"
-                            style={{ animationDelay: `${index * 0.1}s` }}
-                        >
-                            <div className="card-hover h-full p-6 flex flex-col relative overflow-hidden">
-                                {/* Gradient Border Effect */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                                <div className="absolute inset-[2px] bg-white rounded-xl z-0"></div>
+                            {/* Description */}
+                            <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+                                Create a free account or sign in to unlock access to our comprehensive Java learning resources, interactive Q&A, and practice questions.
+                            </p>
 
-                                {/* Content */}
-                                <div className="relative z-10">
-                                    {/* Topic Number Badge */}
-                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold mb-4 group-hover:scale-110 transition-transform">
-                                        {index + 1}
-                                    </div>
-
-                                    <h3 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-indigo-600 transition-colors">
-                                        {topic.title}
-                                    </h3>
-
-                                    <p className="text-slate-600 line-clamp-3 mb-4 flex-grow leading-relaxed">
-                                        {topic.description}
-                                    </p>
-
-                                    {/* Read More Link */}
-                                    <div className="flex items-center text-indigo-600 font-semibold text-sm mt-auto group-hover:translate-x-2 transition-transform">
-                                        <span>Read Article</span>
-                                        <svg
-                                            className="w-5 h-5 ml-2"
-                                            fill="none"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            {/* Benefits List */}
+                            <div className="bg-slate-50 rounded-xl p-6 mb-8 text-left">
+                                <h3 className="font-semibold text-slate-900 mb-4 text-center">What you'll get:</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-start">
+                                        <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                         </svg>
+                                        <div>
+                                            <h4 className="font-semibold text-slate-900">Full Topic Access</h4>
+                                            <p className="text-sm text-slate-600">Browse all Java topics from basics to advanced</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start">
+                                        <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <h4 className="font-semibold text-slate-900">Interactive Q&A</h4>
+                                            <p className="text-sm text-slate-600">Practice with hundreds of questions and answers</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start">
+                                        <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <h4 className="font-semibold text-slate-900">Track Your Progress</h4>
+                                            <p className="text-sm text-slate-600">Monitor your learning journey</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </Link>
-                    ))}
-                </div>
 
-                {/* Empty State */}
-                {filteredTopics.length === 0 && !loading && (
-                    <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
-                        <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex-center">
-                            <svg
-                                className="w-12 h-12 text-slate-400"
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            {/* CTA Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                <Link
+                                    to="/signup"
+                                    className="btn-primary px-8 py-4 text-lg font-semibold inline-block"
+                                >
+                                    Create Free Account
+                                </Link>
+                                <Link
+                                    to="/login"
+                                    className="btn-secondary px-8 py-4 text-lg font-semibold inline-block"
+                                >
+                                    Sign In
+                                </Link>
+                            </div>
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                            {searchQuery ? 'No topics found' : 'No topics available yet'}
-                        </h3>
-                        <p className="text-slate-500 text-lg mb-6">
-                            {searchQuery
-                                ? 'Try adjusting your search query'
-                                : 'Check back later or add some via Admin Dashboard'}
-                        </p>
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery('')}
-                                className="btn-primary"
-                            >
-                                Clear Search
-                            </button>
-                        )}
                     </div>
+                ) : (
+                    <>
+                        {/* Search Bar - Only show for logged-in users */}
+                        <div className="max-w-2xl mx-auto mb-12">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search topics..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="input-field pl-12 pr-4 py-4 text-lg shadow-md"
+                                />
+                                <svg
+                                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-400"
+                                    fill="none"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Section Header */}
+                        <div className="text-center mb-12">
+                            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
+                                Explore Java Topics
+                            </h2>
+                            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                                Choose from our curated collection of Java programming topics
+                            </p>
+                        </div>
+
+                        {/* Topics Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {filteredTopics.map((topic, index) => (
+                                <Link
+                                    key={topic.id}
+                                    to={`/topic/${topic.id}`}
+                                    className="group block h-full animate-fadeIn"
+                                    style={{ animationDelay: `${index * 0.1}s` }}
+                                >
+                                    <div className="card-hover h-full p-6 flex flex-col relative overflow-hidden">
+                                        {/* Gradient Border Effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                                        <div className="absolute inset-[2px] bg-white rounded-xl z-0"></div>
+
+                                        {/* Content */}
+                                        <div className="relative z-10">
+                                            {/* Topic Number Badge */}
+                                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold mb-4 group-hover:scale-110 transition-transform">
+                                                {index + 1}
+                                            </div>
+
+                                            <h3 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                                {topic.title}
+                                            </h3>
+
+                                            <p className="text-slate-600 line-clamp-3 mb-4 flex-grow leading-relaxed">
+                                                {topic.description}
+                                            </p>
+
+                                            {/* Read More Link */}
+                                            <div className="flex items-center text-indigo-600 font-semibold text-sm mt-auto group-hover:translate-x-2 transition-transform">
+                                                <span>Read Article</span>
+                                                <svg
+                                                    className="w-5 h-5 ml-2"
+                                                    fill="none"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* Empty State */}
+                        {filteredTopics.length === 0 && !loading && (
+                            <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
+                                <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex-center">
+                                    <svg
+                                        className="w-12 h-12 text-slate-400"
+                                        fill="none"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                                    {searchQuery ? 'No topics found' : 'No topics available yet'}
+                                </h3>
+                                <p className="text-slate-500 text-lg mb-6">
+                                    {searchQuery
+                                        ? 'Try adjusting your search query'
+                                        : 'Check back later or add some via Admin Dashboard'}
+                                </p>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="btn-primary"
+                                    >
+                                        Clear Search
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
 

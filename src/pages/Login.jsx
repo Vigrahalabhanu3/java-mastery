@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
+import { isAdminEmail } from '../config/admin';
 import { useNavigate, Link } from 'react-router-dom';
 
 function Login() {
@@ -16,8 +17,15 @@ function Login() {
         setError('');
         setLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            navigate('/admin');
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Redirect based on user role
+            if (isAdminEmail(user.email)) {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             setError('Failed to login. Please check your credentials.');
             console.error(err);
