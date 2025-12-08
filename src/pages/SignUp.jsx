@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 import { isAdminEmail } from '../config/admin';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -50,11 +51,22 @@ function SignUp() {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
+            // Create user profile document in Firestore
+            await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                firstName: '',
+                lastName: '',
+                dateOfBirth: null,
+                photoURL: '',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+
             // Redirect based on user role
             if (isAdminEmail(user.email)) {
                 navigate('/admin');
             } else {
-                navigate('/');
+                navigate('/profile'); // Redirect to profile to complete setup
             }
         } catch (err) {
             setError(err.message);

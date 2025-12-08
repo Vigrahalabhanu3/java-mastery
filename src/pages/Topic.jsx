@@ -5,7 +5,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../firebase';
 
 function Topic() {
-    const { topicId } = useParams();
+    const { courseId, topicId } = useParams();
+    const [course, setCourse] = useState(null);
     const [topic, setTopic] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,13 +31,22 @@ function Topic() {
             }
 
             try {
-                const topicDocRef = doc(db, 'java_topics', topicId);
+                // Fetch course details
+                const courseDocRef = doc(db, 'courses', courseId);
+                const courseDoc = await getDoc(courseDocRef);
+                if (courseDoc.exists()) {
+                    setCourse({ id: courseDoc.id, ...courseDoc.data() });
+                }
+
+                // Fetch topic details
+                const topicDocRef = doc(db, 'courses', courseId, 'topics', topicId);
                 const topicDoc = await getDoc(topicDocRef);
 
                 if (topicDoc.exists()) {
                     setTopic({ id: topicDoc.id, ...topicDoc.data() });
 
-                    const questionsColRef = collection(db, 'java_topics', topicId, 'questions');
+                    // Fetch questions for this topic
+                    const questionsColRef = collection(db, 'courses', courseId, 'topics', topicId, 'questions');
                     const questionsSnapshot = await getDocs(questionsColRef);
                     const questionsList = questionsSnapshot.docs.map(doc => ({
                         id: doc.id,
@@ -54,7 +64,7 @@ function Topic() {
         if (!authLoading) {
             fetchTopicData();
         }
-    }, [topicId, user, authLoading]);
+    }, [courseId, topicId, user, authLoading]);
 
     const toggleQuestion = (questionId) => {
         setExpandedQuestions(prev => {
@@ -113,12 +123,22 @@ function Topic() {
                 <div className="container-custom py-4">
                     <nav className="flex items-center space-x-2 text-sm">
                         <Link to="/" className="text-slate-500 hover:text-indigo-600 transition-colors">
-                            Home
+                            Courses
                         </Link>
                         <svg className="w-4 h-4 text-slate-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                             <path d="M9 5l7 7-7 7" />
                         </svg>
-                        <span className="text-slate-700 font-medium truncate">{topic.title}</span>
+                        {course && (
+                            <>
+                                <Link to={`/course/${courseId}`} className="text-slate-500 hover:text-indigo-600 transition-colors">
+                                    {course.name}
+                                </Link>
+                                <svg className="w-4 h-4 text-slate-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path d="M9 5l7 7-7 7" />
+                                </svg>
+                            </>
+                        )}
+                        <span className="text-slate-700 font-medium truncate">{topic?.title}</span>
                     </nav>
                 </div>
             </div>
@@ -127,13 +147,13 @@ function Topic() {
                 <div className="max-w-4xl mx-auto">
                     {/* Back Button */}
                     <Link
-                        to="/"
+                        to={`/course/${courseId}`}
                         className="inline-flex items-center text-slate-600 hover:text-indigo-600 mb-8 transition-colors font-medium group"
                     >
                         <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                             <path d="M15 19l-7-7 7-7" />
                         </svg>
-                        Back to Topics
+                        Back to {course?.name || 'Course'}
                     </Link>
 
                     {/* Article Card */}

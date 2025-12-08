@@ -5,7 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../firebase';
 
 function Home() {
-    const [topics, setTopics] = useState([]);
+    const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [user, setUser] = useState(null);
@@ -20,38 +20,38 @@ function Home() {
     }, []);
 
     useEffect(() => {
-        const fetchTopics = async () => {
-            // Only fetch topics if user is logged in
+        const fetchCourses = async () => {
+            // Only fetch courses if user is logged in
             if (!user) {
                 setLoading(false);
                 return;
             }
 
             try {
-                const querySnapshot = await getDocs(collection(db, 'java_topics'));
-                const topicsList = querySnapshot.docs.map(doc => ({
+                const querySnapshot = await getDocs(collection(db, 'courses'));
+                const coursesList = querySnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
-                setTopics(topicsList);
+                setCourses(coursesList);
             } catch (error) {
-                console.error("Error fetching topics:", error);
+                console.error("Error fetching courses:", error);
             } finally {
                 setLoading(false);
             }
         };
 
         if (!authLoading) {
-            fetchTopics();
+            fetchCourses();
         }
     }, [user, authLoading]);
 
-    const filteredTopics = topics.filter(topic =>
-        topic.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        topic.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredCourses = courses.filter(course =>
+        course.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        course.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="min-h-screen">
                 {/* Hero Skeleton */}
@@ -62,7 +62,7 @@ function Home() {
                     </div>
                 </div>
 
-                {/* Topics Skeleton */}
+                {/* Courses Skeleton */}
                 <div className="container-custom section">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -87,17 +87,17 @@ function Home() {
                 <div className="container-custom section relative z-10">
                     <div className="text-center max-w-4xl mx-auto animate-fadeIn">
                         <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
-                            Master Java Programming
+                            Master Programming Skills
                         </h1>
                         <p className="text-xl md:text-2xl text-indigo-100 mb-8 max-w-2xl mx-auto leading-relaxed">
-                            Explore comprehensive tutorials, interactive Q&A, and hands-on examples. From basics to advanced concepts.
+                            Explore comprehensive courses, interactive Q&A, and hands-on examples. From basics to advanced concepts.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                             <a
-                                href="#topics"
+                                href="#courses"
                                 className="bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
                             >
-                                Explore Topics
+                                Explore Courses
                             </a>
                             <Link
                                 to="/signup"
@@ -111,8 +111,8 @@ function Home() {
                     {/* Stats Section */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto">
                         <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                            <div className="text-4xl font-bold mb-2">{topics.length}+</div>
-                            <div className="text-indigo-100">Topics Covered</div>
+                            <div className="text-4xl font-bold mb-2">{courses.length}+</div>
+                            <div className="text-indigo-100">Courses Available</div>
                         </div>
                         <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
                             <div className="text-4xl font-bold mb-2">500+</div>
@@ -133,8 +133,8 @@ function Home() {
                 </div>
             </section>
 
-            {/* Search and Topics Section */}
-            <section id="topics" className="container-custom section">
+            {/* Search and Courses Section */}
+            <section id="courses" className="container-custom section">
                 {/* Show login prompt if user is not authenticated */}
                 {!user && !authLoading ? (
                     <div className="max-w-3xl mx-auto text-center">
@@ -148,12 +148,12 @@ function Home() {
 
                             {/* Heading */}
                             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                                Sign In to Access Topics
+                                Sign In to Access Courses
                             </h2>
 
                             {/* Description */}
                             <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                                Create a free account or sign in to unlock access to our comprehensive Java learning resources, interactive Q&A, and practice questions.
+                                Create a free account or sign in to unlock access to our comprehensive learning resources, interactive Q&A, and practice questions.
                             </p>
 
                             {/* Benefits List */}
@@ -165,8 +165,8 @@ function Home() {
                                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                         </svg>
                                         <div>
-                                            <h4 className="font-semibold text-slate-900">Full Topic Access</h4>
-                                            <p className="text-sm text-slate-600">Browse all Java topics from basics to advanced</p>
+                                            <h4 className="font-semibold text-slate-900">Full Course Access</h4>
+                                            <p className="text-sm text-slate-600">Browse all courses from basics to advanced</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start">
@@ -214,7 +214,7 @@ function Home() {
                             <div className="relative">
                                 <input
                                     type="text"
-                                    placeholder="Search topics..."
+                                    placeholder="Search courses..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="input-field pl-12 pr-4 py-4 text-lg shadow-md"
@@ -236,45 +236,56 @@ function Home() {
                         {/* Section Header */}
                         <div className="text-center mb-12">
                             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
-                                Explore Java Topics
+                                Explore Courses
                             </h2>
                             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                                Choose from our curated collection of Java programming topics
+                                Choose from our curated collection of programming courses
                             </p>
                         </div>
 
-                        {/* Topics Grid */}
+                        {/* Courses Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {filteredTopics.map((topic, index) => (
+                            {filteredCourses.map((course, index) => (
                                 <Link
-                                    key={topic.id}
-                                    to={`/topic/${topic.id}`}
+                                    key={course.id}
+                                    to={`/course/${course.id}`}
                                     className="group block h-full animate-fadeIn"
                                     style={{ animationDelay: `${index * 0.1}s` }}
                                 >
                                     <div className="card-hover h-full p-6 flex flex-col relative overflow-hidden">
                                         {/* Gradient Border Effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                                        <div
+                                            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
+                                            style={{ background: `linear-gradient(135deg, ${course.color}20 0%, ${course.color}40 100%)` }}
+                                        ></div>
                                         <div className="absolute inset-[2px] bg-white rounded-xl z-0"></div>
 
                                         {/* Content */}
                                         <div className="relative z-10">
-                                            {/* Topic Number Badge */}
-                                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold mb-4 group-hover:scale-110 transition-transform">
-                                                {index + 1}
+                                            {/* Course Icon */}
+                                            <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">
+                                                {course.icon}
                                             </div>
 
                                             <h3 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-indigo-600 transition-colors">
-                                                {topic.title}
+                                                {course.name}
                                             </h3>
 
                                             <p className="text-slate-600 line-clamp-3 mb-4 flex-grow leading-relaxed">
-                                                {topic.description}
+                                                {course.description}
                                             </p>
 
-                                            {/* Read More Link */}
+                                            {/* Course Stats */}
+                                            <div className="flex items-center text-sm text-slate-500 mb-4">
+                                                <svg className="w-4 h-4 mr-1" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                </svg>
+                                                {course.topicCount || 0} Topics
+                                            </div>
+
+                                            {/* View Course Link */}
                                             <div className="flex items-center text-indigo-600 font-semibold text-sm mt-auto group-hover:translate-x-2 transition-transform">
-                                                <span>Read Article</span>
+                                                <span>View Course</span>
                                                 <svg
                                                     className="w-5 h-5 ml-2"
                                                     fill="none"
@@ -294,7 +305,7 @@ function Home() {
                         </div>
 
                         {/* Empty State */}
-                        {filteredTopics.length === 0 && !loading && (
+                        {filteredCourses.length === 0 && !loading && (
                             <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
                                 <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex-center">
                                     <svg
@@ -310,12 +321,12 @@ function Home() {
                                     </svg>
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                                    {searchQuery ? 'No topics found' : 'No topics available yet'}
+                                    {searchQuery ? 'No courses found' : 'No courses available yet'}
                                 </h3>
                                 <p className="text-slate-500 text-lg mb-6">
                                     {searchQuery
                                         ? 'Try adjusting your search query'
-                                        : 'Check back later or add some via Admin Dashboard'}
+                                        : 'Courses will be added soon'}
                                 </p>
                                 {searchQuery && (
                                     <button
@@ -336,10 +347,10 @@ function Home() {
                 <div className="container-custom">
                     <div className="text-center mb-12">
                         <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
-                            Why Choose JavaMastery?
+                            Why Choose CourseMastery?
                         </h2>
                         <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                            Everything you need to become a Java expert
+                            Everything you need to become a programming expert
                         </p>
                     </div>
 
@@ -353,7 +364,7 @@ function Home() {
                             </div>
                             <h3 className="text-xl font-bold mb-3 text-slate-800">Comprehensive Content</h3>
                             <p className="text-slate-600 leading-relaxed">
-                                In-depth tutorials covering Java from fundamentals to advanced topics
+                                In-depth courses covering programming from fundamentals to advanced topics
                             </p>
                         </div>
 
