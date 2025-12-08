@@ -7,6 +7,8 @@ import Topic from './pages/Topic';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import Contact from './pages/Contact';
+import About from './pages/About';
 
 function ProtectedRoute({ children }) {
     const [user, setUser] = useState(null);
@@ -94,6 +96,12 @@ function NavBar() {
                         <Link to="/" className={`${isActive('/')} transition-colors`}>
                             Home
                         </Link>
+                        <Link to="/about" className={`${isActive('/about')} transition-colors`}>
+                            About
+                        </Link>
+                        <Link to="/contact" className={`${isActive('/contact')} transition-colors`}>
+                            Contact
+                        </Link>
                         {user && (
                             <>
                                 <Link to="/admin" className={`${isActive('/admin')} transition-colors`}>
@@ -152,6 +160,18 @@ function NavBar() {
                         >
                             Home
                         </Link>
+                        <Link
+                            to="/about"
+                            className={`block px-4 py-2 rounded-lg ${isActive('/about')} transition-colors`}
+                        >
+                            About
+                        </Link>
+                        <Link
+                            to="/contact"
+                            className={`block px-4 py-2 rounded-lg ${isActive('/contact')} transition-colors`}
+                        >
+                            Contact
+                        </Link>
                         {user && (
                             <>
                                 <Link
@@ -191,6 +211,8 @@ function App() {
                 <main className="flex-grow">
                     <Routes>
                         <Route path="/" element={<Home />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/contact" element={<Contact />} />
                         <Route path="/topic/:topicId" element={<Topic />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<SignUp />} />
@@ -242,9 +264,9 @@ function App() {
                                 <h4 className="font-semibold text-white mb-4">Quick Links</h4>
                                 <ul className="space-y-2">
                                     <li><Link to="/" className="hover:text-indigo-400 transition-colors">Home</Link></li>
+                                    <li><Link to="/about" className="hover:text-indigo-400 transition-colors">About</Link></li>
+                                    <li><Link to="/contact" className="hover:text-indigo-400 transition-colors">Contact</Link></li>
                                     <li><Link to="/admin" className="hover:text-indigo-400 transition-colors">Dashboard</Link></li>
-                                    <li><a href="#" className="hover:text-indigo-400 transition-colors">About Us</a></li>
-                                    <li><a href="#" className="hover:text-indigo-400 transition-colors">Contact</a></li>
                                 </ul>
                             </div>
 
