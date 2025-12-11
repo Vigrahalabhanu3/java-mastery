@@ -15,6 +15,7 @@ import About from './pages/About';
 import Unauthorized from './pages/Unauthorized';
 import MigrationTool from './pages/MigrationTool';
 import Profile from './pages/Profile';
+import Payment from './pages/Payment';
 
 function ProtectedRoute({ children }) {
     const [user, setUser] = useState(null);
@@ -171,6 +172,9 @@ function NavBar() {
                             <span>Contact</span>
                             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-600 to-violet-600 group-hover:w-full transition-all duration-300"></span>
                         </Link>
+                        <Link to="/payment" className="px-4 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all duration-200">
+                            Upgrade Pro
+                        </Link>
 
                         {/* User Menu */}
                         {user && (
@@ -316,6 +320,12 @@ function NavBar() {
                         >
                             Contact
                         </Link>
+                        <Link
+                            to="/payment"
+                            className={`block px-4 py-2.5 rounded-lg ${isActive('/payment')} transition-colors font-medium text-indigo-600`}
+                        >
+                            Upgrade Pro
+                        </Link>
                         {user && (
                             <>
                                 {isAdmin && (
@@ -357,6 +367,7 @@ function App() {
                         <Route path="/signup" element={<SignUp />} />
                         <Route path="/unauthorized" element={<Unauthorized />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/payment" element={<Payment />} />
                         <Route
                             path="/admin"
                             element={
