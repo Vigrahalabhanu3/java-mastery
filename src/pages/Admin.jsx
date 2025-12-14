@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, getDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
 
 // --- Icons ---
@@ -12,6 +12,7 @@ const Icons = {
     Edit: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
     Delete: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     Search: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    MCQs: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>,
     Close: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
@@ -68,16 +69,19 @@ function Admin() {
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [selectedTopicId, setSelectedTopicId] = useState('');
     const [questionsList, setQuestionsList] = useState([]);
+    const [mcqsList, setMcqsList] = useState([]);
 
     // Modal State
     const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
     const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
     const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
+    const [isMCQModalOpen, setIsMCQModalOpen] = useState(false);
 
     // Form States
-    const [courseForm, setCourseForm] = useState({ name: '', description: '', icon: '', color: '#6366f1', slug: '', isEditing: false, id: null });
-    const [topicForm, setTopicForm] = useState({ title: '', description: '', isEditing: false, id: null });
+    const [courseForm, setCourseForm] = useState({ name: '', description: '', icon: '', color: '#6366f1', slug: '', accessCode: '', type: 'self-paced', isEditing: false, id: null });
+    const [topicForm, setTopicForm] = useState({ title: '', description: '', slideUrl: '', cheatsheetUrl: '', isEditing: false, id: null });
     const [questionForm, setQuestionForm] = useState({ question: '', answer: '', isEditing: false, id: null });
+    const [mcqForm, setMcqForm] = useState({ question: '', optionA: '', optionB: '', optionC: '', optionD: '', correctOption: 'A', isEditing: false, id: null });
 
     // --- Effects ---
 
@@ -88,14 +92,19 @@ function Admin() {
     useEffect(() => {
         if (selectedCourseId) {
             fetchTopics(selectedCourseId);
+            fetchTopics(selectedCourseId);
             setQuestionsList([]);
+            setMcqsList([]);
             setSelectedTopicId('');
         }
     }, [selectedCourseId]);
 
     useEffect(() => {
         if (selectedCourseId && selectedTopicId) {
-            fetchQuestions(selectedCourseId, selectedTopicId);
+            if (selectedCourseId && selectedTopicId) {
+                fetchQuestions(selectedCourseId, selectedTopicId);
+                fetchMCQs(selectedCourseId, selectedTopicId);
+            }
         }
     }, [selectedCourseId, selectedTopicId]);
 
@@ -127,15 +136,22 @@ function Admin() {
         setQuestionsList(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     };
 
+    const fetchMCQs = async (courseId, topicId) => {
+        const mRef = collection(db, 'courses', courseId, 'topics', topicId, 'mcqs');
+        const mQuery = query(mRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(mQuery);
+        setMcqsList(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
+
     // --- Actions ---
 
     const handleSaveCourse = async (e) => {
         e.preventDefault();
-        const { name, description, icon, color, slug, isEditing, id } = courseForm;
+        const { name, description, icon, color, slug, accessCode, isEditing, id } = courseForm;
 
         try {
             if (isEditing) {
-                await updateDoc(doc(db, 'courses', id), { name, description, icon, color });
+                await updateDoc(doc(db, 'courses', id), { name, description, icon, color, accessCode: accessCode || '', type: courseForm.type || 'self-paced' });
                 showMessage('success', 'Course updated successfully');
             } else {
                 const cleanSlug = slug.toLowerCase().replace(/\s+/g, '-');
@@ -146,7 +162,8 @@ function Admin() {
                     return;
                 }
                 await setDoc(courseRef, {
-                    name, description, icon, color, slug: cleanSlug,
+                    name, description, icon, color, slug: cleanSlug, accessCode: accessCode || '',
+                    type: courseForm.type || 'self-paced',
                     createdAt: serverTimestamp(),
                     topicCount: 0
                 });
@@ -175,15 +192,15 @@ function Admin() {
     const handleSaveTopic = async (e) => {
         e.preventDefault();
         if (!selectedCourseId) return showMessage('error', 'No course selected');
-        const { title, description, isEditing, id } = topicForm;
+        const { title, description, slideUrl, cheatsheetUrl, isEditing, id } = topicForm;
 
         try {
             if (isEditing) {
-                await updateDoc(doc(db, 'courses', selectedCourseId, 'topics', id), { title, description });
+                await updateDoc(doc(db, 'courses', selectedCourseId, 'topics', id), { title, description, slideUrl: slideUrl || '', cheatsheetUrl: cheatsheetUrl || '' });
                 showMessage('success', 'Topic updated');
             } else {
                 await addDoc(collection(db, 'courses', selectedCourseId, 'topics'), {
-                    title, description, createdAt: serverTimestamp()
+                    title, description, slideUrl: slideUrl || '', cheatsheetUrl: cheatsheetUrl || '', createdAt: serverTimestamp()
                 });
                 // Update count
                 const course = courses.find(c => c.id === selectedCourseId);
@@ -249,6 +266,41 @@ function Admin() {
         }
     };
 
+    const handleSaveMCQ = async (e) => {
+        e.preventDefault();
+        if (!selectedCourseId || !selectedTopicId) return showMessage('error', 'Select course & topic');
+        const { question, optionA, optionB, optionC, optionD, correctOption, isEditing, id } = mcqForm;
+
+        try {
+            const mcqData = { question, optionA, optionB, optionC, optionD, correctOption };
+            if (isEditing) {
+                await updateDoc(doc(db, 'courses', selectedCourseId, 'topics', selectedTopicId, 'mcqs', id), mcqData);
+                showMessage('success', 'MCQ updated');
+            } else {
+                await addDoc(collection(db, 'courses', selectedCourseId, 'topics', selectedTopicId, 'mcqs'), {
+                    ...mcqData, createdAt: serverTimestamp()
+                });
+                showMessage('success', 'MCQ added');
+            }
+            setIsMCQModalOpen(false);
+            fetchMCQs(selectedCourseId, selectedTopicId);
+            resetMCQForm();
+        } catch (e) {
+            showMessage('error', e.message);
+        }
+    };
+
+    const handleDeleteMCQ = async (id) => {
+        if (!window.confirm('Delete MCQ?')) return;
+        try {
+            await deleteDoc(doc(db, 'courses', selectedCourseId, 'topics', selectedTopicId, 'mcqs', id));
+            showMessage('success', 'MCQ deleted');
+            fetchMCQs(selectedCourseId, selectedTopicId);
+        } catch (e) {
+            showMessage('error', e.message);
+        }
+    };
+
     // --- Helpers ---
 
     const showMessage = (type, text) => {
@@ -256,13 +308,15 @@ function Admin() {
         setTimeout(() => setMessage(null), 4000);
     };
 
-    const resetCourseForm = () => setCourseForm({ name: '', description: '', icon: '', color: '#6366f1', slug: '', isEditing: false, id: null });
-    const resetTopicForm = () => setTopicForm({ title: '', description: '', isEditing: false, id: null });
+    const resetCourseForm = () => setCourseForm({ name: '', description: '', icon: '', color: '#6366f1', slug: '', accessCode: '', type: 'self-paced', isEditing: false, id: null });
+    const resetTopicForm = () => setTopicForm({ title: '', description: '', slideUrl: '', cheatsheetUrl: '', isEditing: false, id: null });
     const resetQuestionForm = () => setQuestionForm({ question: '', answer: '', isEditing: false, id: null });
+    const resetMCQForm = () => setMcqForm({ question: '', optionA: '', optionB: '', optionC: '', optionD: '', correctOption: 'A', isEditing: false, id: null });
 
     const openEditCourse = (c) => { setCourseForm({ ...c, isEditing: true }); setIsCourseModalOpen(true); };
     const openEditTopic = (t) => { setTopicForm({ ...t, isEditing: true }); setIsTopicModalOpen(true); };
     const openEditQuestion = (q) => { setQuestionForm({ ...q, isEditing: true }); setIsQuestionModalOpen(true); };
+    const openEditMCQ = (m) => { setMcqForm({ ...m, isEditing: true }); setIsMCQModalOpen(true); };
 
     if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
@@ -288,6 +342,7 @@ function Admin() {
                         <Icons.Add /> Create New Course
                     </button>
                     {courses.length > 0 && <button onClick={() => { setActiveView('topics'); }} className="btn-secondary">Manage Curriculum</button>}
+                    {topics.length > 0 && <button onClick={() => { setActiveView('mcqs'); }} className="btn-secondary">Add MCQs</button>}
                 </div>
             </div>
         </div>
@@ -324,6 +379,9 @@ function Admin() {
                             <p className="text-slate-500 text-sm line-clamp-2 mb-4 flex-grow">{course.description}</p>
 
                             <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
+                                <span className={`text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide ${course.type === 'ongoing' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                                    {course.type === 'ongoing' ? 'Ongoing' : 'Self-Paced'}
+                                </span>
                                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                     {course.topicCount || 0} Topics
                                 </span>
@@ -396,6 +454,71 @@ function Admin() {
         </div>
     );
 
+    const MCQsView = () => (
+        <div className="space-y-8 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold text-slate-800">MCQs</h2>
+                    <p className="text-slate-500">Manage interactive quizzes</p>
+                </div>
+                <button onClick={() => { if (!selectedTopicId) return showMessage('error', 'Select a topic'); resetMCQForm(); setIsMCQModalOpen(true); }} className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!selectedTopicId}>
+                    <Icons.Add /> Add MCQ
+                </button>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Selected Course</label>
+                    <select value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} className="input-field w-full bg-slate-50 border-transparent focus:bg-white">
+                        <option value="">-- Select Course --</option>
+                        {courses.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name} ({c.type === 'ongoing' ? 'Ongoing' : 'Self-Paced'})</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Selected Topic</label>
+                    <select value={selectedTopicId} onChange={(e) => setSelectedTopicId(e.target.value)} className="input-field w-full bg-slate-50 border-transparent focus:bg-white" disabled={!selectedCourseId}>
+                        <option value="">-- Select Topic --</option>
+                        {topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+                    </select>
+                </div>
+            </div>
+
+            {selectedTopicId && (
+                <div className="space-y-4">
+                    {mcqsList.length === 0 ? (
+                        <div className="text-center py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                            <p className="text-slate-500">No MCQs found. Add some to test your students!</p>
+                        </div>
+                    ) : (
+                        mcqsList.map((m, idx) => (
+                            <div key={m.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all group">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-emerald-600 text-white font-bold rounded-lg text-sm shadow-md shadow-emerald-200">
+                                            {idx + 1}
+                                        </span>
+                                        <h4 className="font-bold text-slate-900 text-lg">{m.question}</h4>
+                                    </div>
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => openEditMCQ(m)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 rounded-lg"><Icons.Edit /></button>
+                                        <button onClick={() => handleDeleteMCQ(m.id)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 rounded-lg"><Icons.Delete /></button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    {['A', 'B', 'C', 'D'].map(opt => (
+                                        <div key={opt} className={`p-3 rounded-lg border ${m.correctOption === opt ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-bold' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
+                                            <span className="font-bold mr-2">{opt}.</span> {m[`option${opt}`]}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+
     const QuestionsView = () => (
         <div className="space-y-8 animate-fadeIn">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -413,7 +536,7 @@ function Admin() {
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Selected Course</label>
                     <select value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} className="input-field w-full bg-slate-50 border-transparent focus:bg-white">
                         <option value="">-- Select Course --</option>
-                        {courses.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                        {courses.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name} ({c.type === 'ongoing' ? 'Ongoing' : 'Self-Paced'})</option>)}
                     </select>
                 </div>
                 <div>
@@ -463,6 +586,7 @@ function Admin() {
         { id: 'courses', label: 'Courses', icon: Icons.Courses },
         { id: 'topics', label: 'Topics', icon: Icons.Topics },
         { id: 'questions', label: 'Questions', icon: Icons.Questions },
+        { id: 'mcqs', label: 'MCQs', icon: Icons.MCQs },
     ];
 
     return (
@@ -546,6 +670,7 @@ function Admin() {
                     {activeView === 'courses' && <CoursesView />}
                     {activeView === 'topics' && <TopicsView />}
                     {activeView === 'questions' && <QuestionsView />}
+                    {activeView === 'mcqs' && <MCQsView />}
                 </div>
             </main>
 
@@ -580,6 +705,18 @@ function Admin() {
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Short Description</label>
                         <textarea value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })} className="input-field" rows="3" required placeholder="Brief summary of the course..." />
                     </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Course Type</label>
+                        <select value={courseForm.type} onChange={e => setCourseForm({ ...courseForm, type: e.target.value })} className="input-field bg-white">
+                            <option value="self-paced">Self-Paced (Standard)</option>
+                            <option value="ongoing">Ongoing (Live Cohort)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Access Code (Optional)</label>
+                        <input type="text" value={courseForm.accessCode} onChange={e => setCourseForm({ ...courseForm, accessCode: e.target.value })} className="input-field" placeholder="Leave empty for public access" />
+                        <p className="text-xs text-slate-500 mt-1">If set, users must enter this code to view the course content.</p>
+                    </div>
                     <button type="submit" className="btn-primary w-full py-3.5 text-lg shadow-lg shadow-indigo-500/20">{courseForm.isEditing ? 'Save Updates' : 'Create Course'}</button>
                 </form>
             </Modal>
@@ -593,6 +730,14 @@ function Admin() {
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Description</label>
                         <textarea value={topicForm.description} onChange={e => setTopicForm({ ...topicForm, description: e.target.value })} className="input-field" rows="4" required placeholder="What will students learn in this topic?" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Slides URL (Embed)</label>
+                        <input type="text" value={topicForm.slideUrl} onChange={e => setTopicForm({ ...topicForm, slideUrl: e.target.value })} className="input-field" placeholder="https://docs.google.com/presentation/d/.../embed" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Cheatsheet URL</label>
+                        <input type="text" value={topicForm.cheatsheetUrl} onChange={e => setTopicForm({ ...topicForm, cheatsheetUrl: e.target.value })} className="input-field" placeholder="https://example.com/sheet.pdf" />
                     </div>
                     <button type="submit" className="btn-primary w-full py-3.5 shadow-lg shadow-indigo-500/20">{topicForm.isEditing ? 'Save Changes' : 'Add Topic'}</button>
                 </form>
@@ -612,6 +757,35 @@ function Admin() {
                         </div>
                     </div>
                     <button type="submit" className="btn-primary w-full py-3.5 shadow-lg shadow-indigo-500/20">{questionForm.isEditing ? 'Save Changes' : 'Add Question'}</button>
+                </form>
+            </Modal>
+
+            <Modal isOpen={isMCQModalOpen} onClose={() => setIsMCQModalOpen(false)} title={mcqForm.isEditing ? 'Edit MCQ' : 'Add MCQ'}>
+                <form onSubmit={handleSaveMCQ} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Question</label>
+                        <textarea value={mcqForm.question} onChange={e => setMcqForm({ ...mcqForm, question: e.target.value })} className="input-field" rows="2" required placeholder="e.g. What is 2 + 2?" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        {['A', 'B', 'C', 'D'].map(opt => (
+                            <div key={opt}>
+                                <label className="block text-xs font-bold text-slate-500 mb-1">Option {opt}</label>
+                                <input type="text" value={mcqForm[`option${opt}`]} onChange={e => setMcqForm({ ...mcqForm, [`option${opt}`]: e.target.value })} className="input-field" required placeholder={`Option ${opt}`} />
+                            </div>
+                        ))}
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Correct Option</label>
+                        <div className="flex gap-4">
+                            {['A', 'B', 'C', 'D'].map(opt => (
+                                <label key={opt} className={`flex-1 p-3 rounded-lg border cursor-pointer text-center transition-all ${mcqForm.correctOption === opt ? 'bg-emerald-50 border-emerald-500 text-emerald-700 font-bold ring-2 ring-emerald-500/20' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                    <input type="radio" name="correctOption" value={opt} checked={mcqForm.correctOption === opt} onChange={() => setMcqForm({ ...mcqForm, correctOption: opt })} className="hidden" />
+                                    {opt}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <button type="submit" className="btn-primary w-full py-3.5 shadow-lg shadow-indigo-500/20">{mcqForm.isEditing ? 'Save MCQ' : 'Add MCQ'}</button>
                 </form>
             </Modal>
         </div>

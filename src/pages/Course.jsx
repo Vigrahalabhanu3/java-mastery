@@ -13,6 +13,11 @@ function Course() {
     const [authLoading, setAuthLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Locking State
+    const [isLocked, setIsLocked] = useState(false);
+    const [accessCodeInput, setAccessCodeInput] = useState('');
+    const [unlockError, setUnlockError] = useState('');
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
@@ -34,7 +39,17 @@ function Course() {
                 const courseDoc = await getDoc(courseDocRef);
 
                 if (courseDoc.exists()) {
-                    setCourse({ id: courseDoc.id, ...courseDoc.data() });
+                    const courseData = { id: courseDoc.id, ...courseDoc.data() };
+                    setCourse(courseData);
+
+                    // Check if course is locked
+                    if (courseData.accessCode && courseData.accessCode.trim() !== '') {
+                        // Check session storage
+                        const unlockedCourses = JSON.parse(sessionStorage.getItem('unlockedCourses') || '[]');
+                        if (!unlockedCourses.includes(courseId)) {
+                            setIsLocked(true);
+                        }
+                    }
 
                     // Fetch topics for this course
                     const topicsColRef = collection(db, 'courses', courseId, 'topics');
@@ -56,6 +71,22 @@ function Course() {
             fetchCourseData();
         }
     }, [courseId, user, authLoading]);
+
+    const handleUnlock = (e) => {
+        e.preventDefault();
+        if (accessCodeInput === course.accessCode) {
+            setIsLocked(false);
+            setUnlockError('');
+            // Save to session storage
+            const unlockedCourses = JSON.parse(sessionStorage.getItem('unlockedCourses') || '[]');
+            if (!unlockedCourses.includes(courseId)) {
+                unlockedCourses.push(courseId);
+                sessionStorage.setItem('unlockedCourses', JSON.stringify(unlockedCourses));
+            }
+        } else {
+            setUnlockError('Invalid Access Code. Please try again.');
+        }
+    };
 
     // Redirect to login if not authenticated
     if (!authLoading && !user) {
@@ -148,19 +179,28 @@ function Course() {
                             {course.description}
                         </p>
 
-                        {/* Stats */}
+                        {/* Stats or Lock Status */}
                         <div className="flex flex-wrap gap-6">
-                            <div className="flex items-center space-x-2">
-                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex-center">
-                                    <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            {isLocked ? (
+                                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20">
+                                    <svg className="w-6 h-6 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
+                                    <span className="font-bold text-yellow-100">Course Locked</span>
                                 </div>
-                                <div>
-                                    <div className="text-2xl font-bold">{topics.length}</div>
-                                    <div className="text-primary-100 text-sm">Topics</div>
+                            ) : (
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex-center">
+                                        <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold">{topics.length}</div>
+                                        <div className="text-primary-100 text-sm">Topics</div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -173,98 +213,50 @@ function Course() {
                 </div>
             </section>
 
-            {/* Topics Section */}
-            <section className="container-custom section">
-                {/* Search Bar */}
-                <div className="max-w-2xl mx-auto mb-12">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Search topics..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="input-field pl-12 pr-4 py-4 text-lg shadow-md"
-                        />
-                        <svg
-                            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-400"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                </div>
+            {/* Locked Screen or/and Topics Section */}
+            {isLocked ? (
+                <section className="container-custom section">
+                    <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center">
+                        <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                            <svg className="w-10 h-10 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Private Course</h2>
+                        <p className="text-slate-500 mb-6">This course is protected. Please enter the access code provided by your instructor to view the content.</p>
 
-                {/* Section Header */}
-                <div className="text-center mb-12">
-                    <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
-                        Course Topics
-                    </h2>
-                    <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Explore comprehensive topics and master {course.name}
-                    </p>
-                </div>
-
-                {/* Topics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredTopics.map((topic, index) => (
-                        <Link
-                            key={topic.id}
-                            to={`/course/${courseId}/topic/${topic.id}`}
-                            className="group block h-full animate-fadeIn"
-                            style={{ animationDelay: `${index * 0.1}s` }}
-                        >
-                            <div className="card-hover h-full p-6 flex flex-col relative overflow-hidden">
-                                {/* Gradient Border Effect */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                                <div className="absolute inset-[2px] bg-white rounded-xl z-0"></div>
-
-                                {/* Content */}
-                                <div className="relative z-10">
-                                    {/* Topic Number Badge */}
-                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-500 text-white font-bold mb-4 group-hover:scale-110 transition-transform">
-                                        {index + 1}
-                                    </div>
-
-                                    <h3 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-primary-600 transition-colors">
-                                        {topic.title}
-                                    </h3>
-
-                                    <p className="text-slate-600 line-clamp-3 mb-4 flex-grow leading-relaxed">
-                                        {topic.description}
-                                    </p>
-
-                                    {/* Read More Link */}
-                                    <div className="flex items-center text-primary-600 font-semibold text-sm mt-auto group-hover:translate-x-2 transition-transform">
-                                        <span>Read Article</span>
-                                        <svg
-                                            className="w-5 h-5 ml-2"
-                                            fill="none"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                        </svg>
-                                    </div>
-                                </div>
+                        <form onSubmit={handleUnlock} className="space-y-4">
+                            <div>
+                                <input
+                                    type="password"
+                                    value={accessCodeInput}
+                                    onChange={(e) => setAccessCodeInput(e.target.value)}
+                                    className="input-field text-center font-mono tracking-widest text-lg"
+                                    placeholder="ENTER CODE"
+                                    autoFocus
+                                />
+                                {unlockError && <p className="text-red-500 text-sm mt-2 font-medium">{unlockError}</p>}
                             </div>
-                        </Link>
-                    ))}
-                </div>
-
-                {/* Empty State */}
-                {filteredTopics.length === 0 && !loading && (
-                    <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
-                        <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex-center">
+                            <button type="submit" className="btn-primary w-full shadow-lg shadow-primary-500/20">
+                                Unlock Course
+                            </button>
+                        </form>
+                    </div>
+                </section>
+            ) : (
+                <section className="container-custom section">
+                    {/* Search Bar */}
+                    <div className="max-w-2xl mx-auto mb-12">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search topics..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="input-field pl-12 pr-4 py-4 text-lg shadow-md"
+                            />
                             <svg
-                                className="w-12 h-12 text-slate-400"
+                                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-400"
                                 fill="none"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -272,28 +264,107 @@ function Course() {
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
                             >
-                                <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                            {searchQuery ? 'No topics found' : 'No topics available yet'}
-                        </h3>
-                        <p className="text-slate-500 text-lg mb-6">
-                            {searchQuery
-                                ? 'Try adjusting your search query'
-                                : 'Topics will be added soon'}
-                        </p>
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery('')}
-                                className="btn-primary"
-                            >
-                                Clear Search
-                            </button>
-                        )}
                     </div>
-                )}
-            </section>
+
+                    {/* Section Header */}
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
+                            Course Topics
+                        </h2>
+                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                            Explore comprehensive topics and master {course.name}
+                        </p>
+                    </div>
+
+                    {/* Topics Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {filteredTopics.map((topic, index) => (
+                            <Link
+                                key={topic.id}
+                                to={`/course/${courseId}/topic/${topic.id}`}
+                                className="group block h-full animate-fadeIn"
+                                style={{ animationDelay: `${index * 0.1}s` }}
+                            >
+                                <div className="card-hover h-full p-6 flex flex-col relative overflow-hidden">
+                                    {/* Gradient Border Effect */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                                    <div className="absolute inset-[2px] bg-white rounded-xl z-0"></div>
+
+                                    {/* Content */}
+                                    <div className="relative z-10">
+                                        {/* Topic Number Badge */}
+                                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-500 text-white font-bold mb-4 group-hover:scale-110 transition-transform">
+                                            {index + 1}
+                                        </div>
+
+                                        <h3 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-primary-600 transition-colors">
+                                            {topic.title}
+                                        </h3>
+
+                                        <p className="text-slate-600 line-clamp-3 mb-4 flex-grow leading-relaxed">
+                                            {topic.description}
+                                        </p>
+
+                                        {/* Read More Link */}
+                                        <div className="flex items-center text-primary-600 font-semibold text-sm mt-auto group-hover:translate-x-2 transition-transform">
+                                            <span>Read Article</span>
+                                            <svg
+                                                className="w-5 h-5 ml-2"
+                                                fill="none"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* Empty State */}
+                    {filteredTopics.length === 0 && !loading && (
+                        <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
+                            <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex-center">
+                                <svg
+                                    className="w-12 h-12 text-slate-400"
+                                    fill="none"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                                {searchQuery ? 'No topics found' : 'No topics available yet'}
+                            </h3>
+                            <p className="text-slate-500 text-lg mb-6">
+                                {searchQuery
+                                    ? 'Try adjusting your search query'
+                                    : 'Topics will be added soon'}
+                            </p>
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="btn-primary"
+                                >
+                                    Clear Search
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </section>
+            )}
         </div>
     );
 }

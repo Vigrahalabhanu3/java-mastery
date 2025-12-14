@@ -16,6 +16,7 @@ import Unauthorized from './pages/Unauthorized';
 import MigrationTool from './pages/MigrationTool';
 import Profile from './pages/Profile';
 import Payment from './pages/Payment';
+import OngoingCourses from './pages/OngoingCourses';
 
 function ProtectedRoute({ children }) {
     const [user, setUser] = useState(null);
@@ -174,6 +175,10 @@ function NavBar() {
                         </Link>
                         <Link to="/payment" className="px-4 py-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-600 text-white font-medium hover:shadow-lg hover:scale-105 transition-all duration-200">
                             Upgrade Pro
+                        </Link>
+                        <Link to="/ongoing" className="text-indigo-600 font-bold hover:text-indigo-700 flex items-center animate-pulse">
+                            <span className="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
+                            Ongoing Batches
                         </Link>
 
                         {/* User Menu */}
@@ -335,6 +340,12 @@ function NavBar() {
                         >
                             Upgrade Pro
                         </Link>
+                        <Link
+                            to="/ongoing"
+                            className={`block px-4 py-2.5 rounded-lg ${isActive('/ongoing')} transition-colors font-bold text-indigo-600`}
+                        >
+                            Ongoing Batches
+                        </Link>
                         {user && (
                             <>
                                 {isAdmin && (
@@ -377,6 +388,8 @@ function App() {
                         <Route path="/unauthorized" element={<Unauthorized />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/payment" element={<Payment />} />
+                        <Route path="/ongoing" element={<OngoingCourses />} />
+                        <Route path="/live" element={<Navigate to="/ongoing" replace />} />
                         <Route
                             path="/admin"
                             element={

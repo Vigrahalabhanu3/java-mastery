@@ -46,8 +46,9 @@ function Home() {
     }, [user, authLoading]);
 
     const filteredCourses = courses.filter(course =>
-        course.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        (course.type !== 'ongoing') &&
+        (course.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            course.description?.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     if (loading || authLoading) {
@@ -62,7 +63,7 @@ function Home() {
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-700">
             {/* Dark Premium Hero Section */}
             <section className="relative bg-slate-900 pt-24 pb-32 overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2850&q=80')] bg-cover bg-center opacity-20"></div>
+                <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2850&q=80')" }}></div>
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 via-slate-900/95 to-slate-900/90"></div>
 
                 <div className="container-custom relative z-10 text-center max-w-4xl mx-auto px-6">
