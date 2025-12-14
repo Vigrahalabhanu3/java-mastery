@@ -79,7 +79,7 @@ function SignUp() {
     return (
         <div className="min-h-screen flex">
             {/* Left Side - Decorative */}
-            <div className="hidden lg:flex flex-1 bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-700 items-center justify-center p-12 relative overflow-hidden">
+            <div className="hidden lg:flex flex-1 bg-gradient-to-br from-pink-500 via-primary-600 to-primary-700 items-center justify-center p-12 relative overflow-hidden">
                 {/* Animated Background Shapes */}
                 <div className="absolute inset-0 opacity-20">
                     <div className="absolute top-1/3 right-1/3 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse"></div>
@@ -257,15 +257,15 @@ function SignUp() {
                                 type="checkbox"
                                 checked={agreedToTerms}
                                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 mt-1"
+                                className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500 mt-1"
                             />
                             <label className="ml-2 text-sm text-slate-600">
                                 I agree to the{' '}
-                                <a href="#" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                                <a href="#" className="text-primary-600 hover:text-primary-700 font-semibold">
                                     Terms and Conditions
                                 </a>
                                 {' '}and{' '}
-                                <a href="#" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                                <a href="#" className="text-primary-600 hover:text-primary-700 font-semibold">
                                     Privacy Policy
                                 </a>
                             </label>
@@ -275,7 +275,7 @@ function SignUp() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="btn-primary w-full py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+                            className="btn-primary w-full py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center bg-gradient-to-r from-pink-500 to-primary-600 hover:from-pink-600 hover:to-primary-700"
                         >
                             {loading ? (
                                 <>
@@ -324,7 +324,7 @@ function SignUp() {
                     <div className="mt-8 text-center">
                         <p className="text-slate-600">
                             Already have an account?{' '}
-                            <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-700 transition-colors">
+                            <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
                                 Sign In
                             </Link>
                         </p>

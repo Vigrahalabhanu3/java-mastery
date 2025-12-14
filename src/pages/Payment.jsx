@@ -64,11 +64,11 @@ const Payment = () => {
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-8 text-center">
+                <div className="bg-gradient-to-r from-primary-600 to-primary-600 px-6 py-8 text-center">
                     <h2 className="text-3xl font-extrabold text-white tracking-tight">
                         Upgrade to Pro
                     </h2>
-                    <p className="mt-2 text-indigo-100 text-lg">
+                    <p className="mt-2 text-primary-100 text-lg">
                         Unlock all premium courses and features.
                     </p>
                 </div>
@@ -82,14 +82,14 @@ const Payment = () => {
                         </div>
                         <div className="flex justify-between items-center py-3">
                             <span className="text-slate-900 font-bold">Total</span>
-                            <span className="text-2xl font-bold text-indigo-600">₹1,999.00</span>
+                            <span className="text-2xl font-bold text-primary-600">₹1,999.00</span>
                         </div>
                     </div>
 
                     <button
                         onClick={handlePayment}
                         disabled={loading}
-                        className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                        className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-600 hover:from-primary-700 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                     >
                         {loading ? 'Processing...' : 'Pay with Razorpay'}
                     </button>

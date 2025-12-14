@@ -122,7 +122,7 @@ function Topic() {
             <div className="bg-white border-b border-slate-200">
                 <div className="container-custom py-4">
                     <nav className="flex items-center space-x-2 text-sm">
-                        <Link to="/" className="text-slate-500 hover:text-indigo-600 transition-colors">
+                        <Link to="/" className="text-slate-500 hover:text-primary-600 transition-colors">
                             Courses
                         </Link>
                         <svg className="w-4 h-4 text-slate-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
@@ -130,7 +130,7 @@ function Topic() {
                         </svg>
                         {course && (
                             <>
-                                <Link to={`/course/${courseId}`} className="text-slate-500 hover:text-indigo-600 transition-colors">
+                                <Link to={`/course/${courseId}`} className="text-slate-500 hover:text-primary-600 transition-colors">
                                     {course.name}
                                 </Link>
                                 <svg className="w-4 h-4 text-slate-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
@@ -148,7 +148,7 @@ function Topic() {
                     {/* Back Button */}
                     <Link
                         to={`/course/${courseId}`}
-                        className="inline-flex items-center text-slate-600 hover:text-indigo-600 mb-8 transition-colors font-medium group"
+                        className="inline-flex items-center text-slate-600 hover:text-primary-600 mb-8 transition-colors font-medium group"
                     >
                         <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                             <path d="M15 19l-7-7 7-7" />
@@ -159,8 +159,8 @@ function Topic() {
                     {/* Article Card */}
                     <article className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden mb-12 animate-fadeIn">
                         {/* Article Header */}
-                        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-8 md:p-12 text-white">
-                            <div className="flex items-center space-x-4 mb-6 text-indigo-100">
+                        <div className="bg-gradient-to-r from-primary-600 to-primary-600 p-8 md:p-12 text-white">
+                            <div className="flex items-center space-x-4 mb-6 text-primary-100">
                                 <div className="flex items-center">
                                     <svg className="w-5 h-5 mr-2" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                                         <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -192,7 +192,7 @@ function Topic() {
                             <div className="mt-12 pt-8 border-t border-slate-200">
                                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Share this article</h3>
                                 <div className="flex space-x-3">
-                                    <button className="p-3 rounded-lg bg-slate-100 hover:bg-indigo-100 hover:text-indigo-600 transition-colors">
+                                    <button className="p-3 rounded-lg bg-slate-100 hover:bg-primary-100 hover:text-primary-600 transition-colors">
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                                         </svg>
@@ -216,7 +216,7 @@ function Topic() {
                     {questions.length > 0 && (
                         <div className="mb-12">
                             <div className="flex items-center mb-8">
-                                <div className="h-1 w-12 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full mr-4"></div>
+                                <div className="h-1 w-12 bg-gradient-to-r from-primary-600 to-primary-600 rounded-full mr-4"></div>
                                 <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
                                     Common Questions
                                 </h2>
@@ -238,7 +238,7 @@ function Topic() {
                                             >
                                                 <div className="flex-1 pr-4">
                                                     <div className="flex items-start">
-                                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold text-sm mr-3 flex-shrink-0 mt-0.5">
+                                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-500 text-white font-bold text-sm mr-3 flex-shrink-0 mt-0.5">
                                                             {index + 1}
                                                         </span>
                                                         <h3 className="font-bold text-slate-900 text-lg leading-snug">
@@ -263,7 +263,7 @@ function Topic() {
                                             {isExpanded && (
                                                 <div className="px-6 pb-6 animate-fadeIn">
                                                     <div className="pl-11 pt-2 border-t border-slate-100">
-                                                        <div className="mt-4 text-slate-700 text-base leading-relaxed whitespace-pre-wrap bg-slate-50 p-6 rounded-lg border-l-4 border-indigo-500">
+                                                        <div className="mt-4 text-slate-700 text-base leading-relaxed whitespace-pre-wrap bg-slate-50 p-6 rounded-lg border-l-4 border-primary-500">
                                                             {q.answer}
                                                         </div>
                                                     </div>

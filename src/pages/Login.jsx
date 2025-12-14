@@ -119,10 +119,10 @@ function Login() {
                         {/* Remember Me & Forgot Password */}
                         <div className="flex items-center justify-between">
                             <label className="flex items-center">
-                                <input type="checkbox" className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" />
+                                <input type="checkbox" className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500" />
                                 <span className="ml-2 text-sm text-slate-600">Remember me</span>
                             </label>
-                            <a href="#" className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">
+                            <a href="#" className="text-sm text-primary-600 hover:text-primary-700 font-semibold">
                                 Forgot password?
                             </a>
                         </div>
@@ -180,7 +180,7 @@ function Login() {
                     <div className="mt-8 text-center">
                         <p className="text-slate-600">
                             Don't have an account?{' '}
-                            <Link to="/signup" className="text-indigo-600 font-semibold hover:text-indigo-700 transition-colors">
+                            <Link to="/signup" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
                                 Create Account
                             </Link>
                         </p>
@@ -189,7 +189,7 @@ function Login() {
             </div>
 
             {/* Right Side - Decorative */}
-            <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
+            <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary-600 via-primary-600 to-primary-700 items-center justify-center p-12 relative overflow-hidden">
                 {/* Animated Background Shapes */}
                 <div className="absolute inset-0 opacity-20">
                     <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white rounded-full blur-3xl animate-pulse"></div>
@@ -204,7 +204,7 @@ function Login() {
                         </svg>
                     </div>
                     <h2 className="text-4xl font-bold mb-6">Start Your Java Journey</h2>
-                    <p className="text-xl text-indigo-100 leading-relaxed mb-8">
+                    <p className="text-xl text-primary-100 leading-relaxed mb-8">
                         Access comprehensive tutorials, practice questions, and expert guidance to master Java programming.
                     </p>
                     <div className="flex items-center justify-center space-x-8 text-sm">

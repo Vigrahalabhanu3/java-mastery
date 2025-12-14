@@ -46,7 +46,7 @@ function Unauthorized() {
                         </Link>
                         <Link
                             to="/contact"
-                            className="block text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                            className="block text-primary-600 hover:text-primary-700 font-medium transition-colors"
                         >
                             Contact Support
                         </Link>

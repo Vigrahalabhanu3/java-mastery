@@ -5,12 +5,23 @@ import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { uploadProfileImage, validateImageFile } from '../utils/imageUpload';
 
+const Icons = {
+    Camera: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+    User: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
+    Calendar: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+    Mail: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+    Shield: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+};
+
 function Profile() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+
+    // User Stats (mock for now, could be fetched)
+    const [joinDate, setJoinDate] = useState(new Date());
 
     // Form fields
     const [firstName, setFirstName] = useState('');
@@ -24,6 +35,7 @@ function Profile() {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
+                setJoinDate(new Date(currentUser.metadata.creationTime));
                 await fetchUserProfile(currentUser.uid);
             } else {
                 navigate('/login');
@@ -59,21 +71,15 @@ function Profile() {
         }
 
         setImageFile(file);
-
-        // Create preview
         const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result);
-        };
+        reader.onloadend = () => setImagePreview(reader.result);
         reader.readAsDataURL(file);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!user) return;
 
-        // Validation
         if (!firstName.trim() || !lastName.trim()) {
             showMessage('error', 'First name and last name are required');
             return;
@@ -91,13 +97,10 @@ function Profile() {
         setSaving(true);
         try {
             let newPhotoURL = photoURL;
-
-            // Upload image if selected
             if (imageFile) {
                 newPhotoURL = await uploadProfileImage(user.uid, imageFile);
             }
 
-            // Prepare profile data
             const profileData = {
                 email: user.email,
                 firstName: firstName.trim(),
@@ -107,18 +110,11 @@ function Profile() {
                 updatedAt: new Date()
             };
 
-            // Check if profile exists
             const userDoc = await getDoc(doc(db, 'users', user.uid));
-
             if (userDoc.exists()) {
-                // Update existing profile
                 await updateDoc(doc(db, 'users', user.uid), profileData);
             } else {
-                // Create new profile
-                await setDoc(doc(db, 'users', user.uid), {
-                    ...profileData,
-                    createdAt: new Date()
-                });
+                await setDoc(doc(db, 'users', user.uid), { ...profileData, createdAt: new Date() });
             }
 
             setPhotoURL(newPhotoURL);
@@ -139,178 +135,203 @@ function Profile() {
     };
 
     const getInitials = () => {
-        if (firstName && lastName) {
-            return `${firstName[0]}${lastName[0]}`.toUpperCase();
-        }
+        if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
         return user?.email?.substring(0, 2).toUpperCase() || 'U';
     };
 
     if (loading) {
         return (
-            <div className="flex-center min-h-screen">
+            <div className="flex-center min-h-screen bg-slate-50">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 font-medium">Loading profile...</p>
+                    <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600 font-medium">Loading...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12">
-            <div className="max-w-3xl mx-auto px-4">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold gradient-text mb-2">My Profile</h1>
-                    <p className="text-slate-600">Manage your personal information and profile picture</p>
-                </div>
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+            {/* Hero Section */}
+            <div className="relative bg-slate-900 overflow-hidden py-20 pb-32">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl -ml-20 -mb-20"></div>
 
+                <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+                    <span className="inline-block px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 text-xs font-bold tracking-wider mb-4">
+                        ACCOUNT SETTINGS
+                    </span>
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+                        My <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Profile</span>
+                    </h1>
+                    <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+                        Manage your personal details, secure your account, and personalize your experience on JavaMastery.
+                    </p>
+                </div>
+            </div>
+
+            <div className="max-w-6xl mx-auto px-6 -mt-24 pb-20 relative z-20">
                 {/* Message Alert */}
                 {message.text && (
-                    <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
-                        {message.text}
+                    <div className={`mb-6 p-4 rounded-xl shadow-lg border flex items-center animate-slideInRight ${message.type === 'success' ? 'bg-white border-green-500 text-green-700' : 'bg-white border-red-500 text-red-700'}`}>
+                        <div className={`mr-3 p-1 rounded-full ${message.type === 'success' ? 'bg-green-100' : 'bg-red-100'}`}>
+                            {message.type === 'success' ?
+                                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> :
+                                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            }
+                        </div>
+                        <span className="font-medium">{message.text}</span>
                     </div>
                 )}
 
-                {/* Profile Form */}
-                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Profile Image Section */}
-                        <div className="flex flex-col items-center pb-6 border-b border-slate-200">
-                            <div className="relative mb-4">
-                                {imagePreview || photoURL ? (
-                                    <img
-                                        src={imagePreview || photoURL}
-                                        alt="Profile"
-                                        className="w-32 h-32 rounded-full object-cover border-4 border-indigo-100"
-                                    />
-                                ) : (
-                                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-4xl font-bold border-4 border-indigo-100">
-                                        {getInitials()}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Profile Card */}
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 flex flex-col items-center text-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-500 to-violet-600 opacity-90"></div>
+
+                            <div className="relative mb-4 mt-8">
+                                <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden relative bg-slate-100 flex items-center justify-center group">
+                                    {imagePreview || photoURL ? (
+                                        <img src={imagePreview || photoURL} alt="Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                    ) : (
+                                        <span className="text-4xl font-bold text-slate-400">{getInitials()}</span>
+                                    )}
+
+                                    {/* Upload Overlay */}
+                                    <label htmlFor="photo-upload" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                        <Icons.Camera />
+                                        <input id="photo-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="hidden" />
+                                    </label>
+                                </div>
+                                <button onClick={() => document.getElementById('photo-upload').click()} className="absolute bottom-1 right-1 bg-white text-indigo-600 p-2 rounded-full shadow-md hover:scale-110 transition-transform lg:hidden">
+                                    <Icons.Camera />
+                                </button>
+                            </div>
+
+                            <h2 className="text-2xl font-bold text-slate-800">{firstName || 'User'} {lastName}</h2>
+                            <p className="text-slate-500 mb-6">{user.email}</p>
+
+                            <div className="w-full grid grid-cols-2 gap-4 border-t border-slate-100 pt-6">
+                                <div className="text-center">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Joined</p>
+                                    <p className="font-semibold text-slate-700">{joinDate.toLocaleDateString()}</p>
+                                </div>
+                                <div className="text-center border-l border-slate-100">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</p>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mt-1">
+                                        Active
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tips Card */}
+                        <div className="bg-indigo-50 rounded-2xl p-6 border border-indigo-100">
+                            <h3 className="font-bold text-indigo-900 flex items-center gap-2 mb-3">
+                                <Icons.Shield /> Privacy Tips
+                            </h3>
+                            <ul className="text-sm text-indigo-700 space-y-2">
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>Your profile details are private.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>Only your name and photo are visible on certificates.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>Use a strong password to keep your account safe.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Edit Form */}
+                    <div className="lg:col-span-2">
+                        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+                            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600"><Icons.User /></span>
+                                Personal Details
+                            </h3>
+
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">First Name</label>
+                                        <input
+                                            type="text"
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            className="input-field"
+                                            placeholder="Jane"
+                                            required
+                                        />
                                     </div>
-                                )}
-                                <label
-                                    htmlFor="photo-upload"
-                                    className="absolute bottom-0 right-0 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-colors"
-                                >
-                                    <svg className="w-5 h-5 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                        <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                </label>
-                                <input
-                                    id="photo-upload"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                />
-                            </div>
-                            <p className="text-sm text-slate-500 text-center">
-                                Click the camera icon to upload a profile picture<br />
-                                <span className="text-xs">JPG, PNG or WEBP (max 5MB)</span>
-                            </p>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Last Name</label>
+                                        <input
+                                            type="text"
+                                            value={lastName}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            className="input-field"
+                                            placeholder="Doe"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                            <Icons.Mail />
+                                        </div>
+                                        <input
+                                            type="email"
+                                            value={user.email}
+                                            disabled
+                                            className="input-field pl-10 bg-slate-50 text-slate-500 cursor-not-allowed border-slate-200"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-2">To change your email, please contact support.</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Date of Birth</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                            <Icons.Calendar />
+                                        </div>
+                                        <input
+                                            type="date"
+                                            value={dateOfBirth}
+                                            onChange={(e) => setDateOfBirth(e.target.value)}
+                                            className="input-field pl-10"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-100 flex items-center gap-4">
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="btn-primary py-3 px-8 text-base shadow-indigo-500/20 disabled:opacity-70"
+                                    >
+                                        {saving ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/')}
+                                        className="btn-ghost"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-
-                        {/* Email (Read-only) */}
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Email
-                            </label>
-                            <input
-                                type="email"
-                                value={user?.email || ''}
-                                disabled
-                                className="input-field bg-slate-100 cursor-not-allowed"
-                            />
-                            <p className="text-xs text-slate-500 mt-1">Email cannot be changed</p>
-                        </div>
-
-                        {/* Name Fields */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    First Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={firstName}
-                                    onChange={(e) => setFirstName(e.target.value)}
-                                    className="input-field"
-                                    required
-                                    placeholder="John"
-                                    minLength={2}
-                                    maxLength={50}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Last Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={lastName}
-                                    onChange={(e) => setLastName(e.target.value)}
-                                    className="input-field"
-                                    required
-                                    placeholder="Doe"
-                                    minLength={2}
-                                    maxLength={50}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Date of Birth */}
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Date of Birth
-                            </label>
-                            <input
-                                type="date"
-                                value={dateOfBirth}
-                                onChange={(e) => setDateOfBirth(e.target.value)}
-                                className="input-field"
-                                max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
-                            />
-                            <p className="text-xs text-slate-500 mt-1">You must be at least 13 years old</p>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-4 pt-4">
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="btn-primary flex-1 disabled:opacity-50"
-                            >
-                                {saving ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2"></div>
-                                        Saving...
-                                    </>
-                                ) : (
-                                    'Save Changes'
-                                )}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => navigate('/')}
-                                className="btn-secondary"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                {/* Account Info */}
-                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-900 mb-2">ℹ️ Account Information</h4>
-                    <ul className="text-sm text-blue-700 space-y-1">
-                        <li>• Your profile information is private and only visible to you</li>
-                        <li>• Profile pictures are visible to other authenticated users</li>
-                        <li>• All fields except email can be updated anytime</li>
-                    </ul>
+                    </div>
                 </div>
             </div>
         </div>

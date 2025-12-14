@@ -106,7 +106,7 @@ function Course() {
             <div className="bg-white border-b border-slate-200">
                 <div className="container-custom py-4">
                     <nav className="flex items-center space-x-2 text-sm">
-                        <Link to="/" className="text-slate-500 hover:text-indigo-600 transition-colors">
+                        <Link to="/" className="text-slate-500 hover:text-primary-600 transition-colors">
                             Courses
                         </Link>
                         <svg className="w-4 h-4 text-slate-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,7 +118,7 @@ function Course() {
             </div>
 
             {/* Course Header */}
-            <section className="relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 text-white overflow-hidden">
+            <section className="relative bg-gradient-to-br from-primary-600 via-primary-600 to-primary-700 text-white overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse"></div>
                     <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
@@ -144,7 +144,7 @@ function Course() {
                                 </h1>
                             </div>
                         </div>
-                        <p className="text-xl md:text-2xl text-indigo-100 mb-8 leading-relaxed">
+                        <p className="text-xl md:text-2xl text-primary-100 mb-8 leading-relaxed">
                             {course.description}
                         </p>
 
@@ -158,7 +158,7 @@ function Course() {
                                 </div>
                                 <div>
                                     <div className="text-2xl font-bold">{topics.length}</div>
-                                    <div className="text-indigo-100 text-sm">Topics</div>
+                                    <div className="text-primary-100 text-sm">Topics</div>
                                 </div>
                             </div>
                         </div>
@@ -220,17 +220,17 @@ function Course() {
                         >
                             <div className="card-hover h-full p-6 flex flex-col relative overflow-hidden">
                                 {/* Gradient Border Effect */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                                 <div className="absolute inset-[2px] bg-white rounded-xl z-0"></div>
 
                                 {/* Content */}
                                 <div className="relative z-10">
                                     {/* Topic Number Badge */}
-                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold mb-4 group-hover:scale-110 transition-transform">
+                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-500 text-white font-bold mb-4 group-hover:scale-110 transition-transform">
                                         {index + 1}
                                     </div>
 
-                                    <h3 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                    <h3 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-primary-600 transition-colors">
                                         {topic.title}
                                     </h3>
 
@@ -239,7 +239,7 @@ function Course() {
                                     </p>
 
                                     {/* Read More Link */}
-                                    <div className="flex items-center text-indigo-600 font-semibold text-sm mt-auto group-hover:translate-x-2 transition-transform">
+                                    <div className="flex items-center text-primary-600 font-semibold text-sm mt-auto group-hover:translate-x-2 transition-transform">
                                         <span>Read Article</span>
                                         <svg
                                             className="w-5 h-5 ml-2"
