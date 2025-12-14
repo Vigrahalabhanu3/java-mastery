@@ -30,6 +30,7 @@ function Profile() {
     const [photoURL, setPhotoURL] = useState('');
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
+    const [isImageFullView, setIsImageFullView] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -191,23 +192,49 @@ function Profile() {
                             <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-500 to-violet-600 opacity-90"></div>
 
                             <div className="relative mb-4 mt-8">
-                                <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden relative bg-slate-100 flex items-center justify-center group">
+                                <div
+                                    onClick={() => setIsImageFullView(true)}
+                                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden relative bg-slate-100 flex items-center justify-center group cursor-pointer"
+                                    title="Click to view full size"
+                                >
                                     {imagePreview || photoURL ? (
                                         <img src={imagePreview || photoURL} alt="Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                     ) : (
                                         <span className="text-4xl font-bold text-slate-400">{getInitials()}</span>
                                     )}
 
-                                    {/* Upload Overlay */}
-                                    <label htmlFor="photo-upload" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                        <Icons.Camera />
-                                        <input id="photo-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="hidden" />
-                                    </label>
+                                    {/* Hover Overlay hint */}
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+
+                                    </div>
                                 </div>
-                                <button onClick={() => document.getElementById('photo-upload').click()} className="absolute bottom-1 right-1 bg-white text-indigo-600 p-2 rounded-full shadow-md hover:scale-110 transition-transform lg:hidden">
+                                <button onClick={() => document.getElementById('photo-upload').click()} className="absolute bottom-1 right-1 bg-white text-indigo-600 p-2 rounded-full shadow-md hover:scale-110 transition-transform z-10">
                                     <Icons.Camera />
                                 </button>
+                                {/* Hidden File Input */}
+                                <input id="photo-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="hidden" />
                             </div>
+
+                            {/* Lightbox Overlay */}
+                            {isImageFullView && (
+                                <div
+                                    className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+                                    onClick={() => setIsImageFullView(false)}
+                                >
+                                    <button
+                                        onClick={() => setIsImageFullView(false)}
+                                        className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+                                    >
+                                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                    <img
+                                        src={imagePreview || photoURL}
+                                        alt="Profile Full View"
+                                        className="max-w-full max-h-[90vh] rounded-lg shadow-2xl animate-scaleIn"
+                                        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+                                    />
+                                </div>
+                            )}
 
                             <h2 className="text-2xl font-bold text-slate-800">{firstName || 'User'} {lastName}</h2>
                             <p className="text-slate-500 mb-6">{user.email}</p>

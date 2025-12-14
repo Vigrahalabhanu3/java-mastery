@@ -285,21 +285,30 @@ function NavBar() {
                     <div className="container-custom py-4 space-y-2">
                         {/* User Info Mobile */}
                         {user && (
-                            <div className="px-4 py-3 bg-slate-50 rounded-lg mb-3">
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-500 flex items-center justify-center text-white font-semibold shadow-md">
-                                        {getInitials(user.email)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-slate-900 truncate">{user.email}</p>
-                                        {isAdmin && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700 mt-1">
-                                                Admin
-                                            </span>
-                                        )}
+                            <>
+                                <div className="px-4 py-3 bg-slate-50 rounded-lg mb-3">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-500 flex items-center justify-center text-white font-semibold shadow-md">
+                                            {getInitials(user.email)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-slate-900 truncate">{user.email}</p>
+                                            {isAdmin && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700 mt-1">
+                                                    Admin
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                                <Link
+                                    to="/profile"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className={`block px-4 py-2.5 rounded-lg ${isActive('/profile')} transition-colors mb-2 border border-slate-100 bg-white shadow-sm`}
+                                >
+                                    My Profile
+                                </Link>
+                            </>
                         )}
 
                         <Link
